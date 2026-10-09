@@ -1,0 +1,455 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>The Inevitable End</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single column, one screen at a time, countdown tiles over a numbers strip. No glow anywhere. */
+:root{
+  --ink:#120d15;
+  --panel:#1b1420;
+  --panel-2:#241a2a;
+  --edge:#3a2b42;
+  --fg:#e9dcee;
+  --dim:#9c8aa6;
+  --mauve:#c6a0c6;
+  --dust:#d9a3ae;
+  --hot:#ff4f94;
+  --bone:#b9ab9b;
+  --display:"Fraunces", Georgia, "Times New Roman", serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100%;
+  font-family:var(--body);
+  color:var(--fg);
+  background:
+    radial-gradient(820px 460px at 20% -10%, #2a1630 0%, transparent 64%),
+    radial-gradient(620px 360px at 88% 8%, #1d1424 0%, transparent 58%),
+    var(--ink);
+}
+
+.wrap{
+  max-width:640px;
+  margin:0 auto;
+  padding-inline:18px;
+  padding-block:34px 56px;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+
+h1{
+  font-family:var(--display);
+  font-weight:600;
+  font-size:clamp(2.1rem,8.5vw,3.1rem);
+  line-height:1.02;
+  margin:0;
+  color:var(--mauve);
+  text-wrap:balance;
+}
+.kicker{
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--dim);
+  margin-top:6px;
+}
+
+h2{
+  font-family:var(--display);
+  font-weight:400;
+  font-size:1.3rem;
+  margin:0 0 14px;
+  color:var(--dust);
+  text-wrap:balance;
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--edge);
+  border-radius:14px;
+  padding:18px 16px;
+  min-width:0;
+}
+
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.field label{
+  font-family:var(--mono);
+  font-size:.66rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--dim);
+}
+input[type="date"], select{
+  width:100%;
+  background:var(--panel-2);
+  border:1px solid var(--edge);
+  border-radius:10px;
+  color:var(--fg);
+  font-family:var(--mono);
+  font-size:1rem;
+  padding:11px 12px;
+}
+
+button{
+  width:100%;
+  font-family:var(--mono);
+  font-size:.76rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  padding:14px 16px;
+  border-radius:10px;
+  border:1px solid var(--hot);
+  background:rgba(255,79,148,.14);
+  color:var(--fg);
+  cursor:pointer;
+}
+button:hover{background:rgba(255,79,148,.22)}
+button.quiet{
+  border-color:var(--edge);
+  background:transparent;
+  color:var(--dim);
+}
+button.quiet:hover{color:var(--fg);border-color:var(--mauve);background:transparent}
+
+.err{
+  color:var(--hot);
+  font-size:.86rem;
+  margin:-6px 0 12px;
+}
+
+/* ---- countdown ---- */
+.timer{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.unit{
+  background:var(--panel-2);
+  border:1px solid var(--edge);
+  border-radius:11px;
+  padding:12px 6px;
+  text-align:center;
+  min-width:0;
+}
+.unit .n{
+  display:block;
+  font-family:var(--mono);
+  font-weight:500;
+  font-variant-numeric:tabular-nums;
+  font-size:clamp(1.3rem,6vw,1.9rem);
+  line-height:1.1;
+  color:var(--dust);
+}
+.unit .l{
+  display:block;
+  font-family:var(--mono);
+  font-size:.6rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--dim);
+  margin-top:4px;
+}
+
+.verdict{
+  font-family:var(--display);
+  font-size:1.02rem;
+  line-height:1.5;
+  color:var(--fg);
+  margin:16px 0 0;
+  text-wrap:balance;
+}
+.pet{
+  font-size:.88rem;
+  color:var(--dim);
+  line-height:1.5;
+  margin:8px 0 0;
+}
+.over{
+  font-family:var(--display);
+  font-size:1.4rem;
+  color:var(--hot);
+  margin:16px 0 0;
+}
+
+/* ---- numbers strip ---- */
+.strip{display:flex;flex-direction:column;gap:14px}
+.numrow{display:flex;flex-direction:column;gap:8px;min-width:0}
+.numrow .cap{
+  font-family:var(--mono);
+  font-size:.64rem;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--dim);
+}
+.balls{display:flex;gap:8px;flex-wrap:wrap}
+.ball{
+  width:44px;
+  height:44px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  font-family:var(--mono);
+  font-variant-numeric:tabular-nums;
+  font-size:1rem;
+  border:1px solid var(--edge);
+  background:var(--panel-2);
+}
+.lucky .ball{color:var(--mauve);border-color:#4a3552}
+.unlucky .ball{color:var(--bone);border-color:#3b3430}
+
+.foot{
+  font-size:.76rem;
+  color:var(--dim);
+  line-height:1.55;
+  text-align:center;
+}
+
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+
+:focus-visible{outline:2px solid var(--mauve);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header>
+    <h1>The Inevitable End</h1>
+    <div class="kicker">A fortune teller with bad manners</div>
+  </header>
+
+  <!-- input -->
+  <section class="panel" id="screenInput">
+    <h2>Find out when it's all over</h2>
+
+    <div class="field">
+      <label for="birthdate">Your birthdate</label>
+      <input type="date" id="birthdate" max="2100-12-31">
+    </div>
+
+    <div class="field">
+      <label for="pet">Dog person or cat person?</label>
+      <select id="pet">
+        <option value="dog">Dog person</option>
+        <option value="cat">Cat person</option>
+        <option value="both">Both, obviously</option>
+        <option value="neither">Neither, I have a snake</option>
+      </select>
+    </div>
+
+    <div class="err" id="err" hidden></div>
+    <button id="go">Gaze into the void</button>
+  </section>
+
+  <!-- countdown -->
+  <section class="panel" id="screenCount" hidden>
+    <h2>Your remaining time</h2>
+    <div class="timer">
+      <div class="unit"><span class="n" id="y">0</span><span class="l">Years</span></div>
+      <div class="unit"><span class="n" id="mo">0</span><span class="l">Months</span></div>
+      <div class="unit"><span class="n" id="d">0</span><span class="l">Days</span></div>
+      <div class="unit"><span class="n" id="h">0</span><span class="l">Hours</span></div>
+      <div class="unit"><span class="n" id="mi">0</span><span class="l">Minutes</span></div>
+      <div class="unit"><span class="n" id="s">0</span><span class="l">Seconds</span></div>
+    </div>
+
+    <p class="verdict" id="verdict"></p>
+    <p class="pet" id="petLine"></p>
+    <p class="over" id="over" hidden>Your time is up.</p>
+
+    <div class="stack">
+      <button class="quiet" id="again">Tempt fate again</button>
+    </div>
+  </section>
+
+  <!-- numbers -->
+  <section class="panel strip" id="strip" hidden>
+    <div class="numrow lucky">
+      <span class="cap">Lucky numbers</span>
+      <div class="balls" id="luckyBalls"></div>
+    </div>
+    <div class="numrow unlucky">
+      <span class="cap">Unlucky numbers</span>
+      <div class="balls" id="unluckyBalls"></div>
+    </div>
+    <button class="quiet" id="reroll">Draw again</button>
+  </section>
+
+  <p class="foot">Not scientifically accurate. Nobody knows the real answer. For fun only.</p>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var $ = function(id){ return document.getElementById(id); };
+  var screenInput = $("screenInput"), screenCount = $("screenCount"), strip = $("strip");
+  var birthdate = $("birthdate"), pet = $("pet"), err = $("err");
+  var over = $("over"), verdict = $("verdict"), petLine = $("petLine");
+  var timer = null, endDate = null;
+
+  var PET_LINES = {
+    dog: "A dog person. Loyal to the end, and the end is loyal right back.",
+    cat: "A cat person. The cat has already made other arrangements.",
+    both: "Both. Overcommitted, even in the afterlife.",
+    neither: "A snake person. The snake will outlive this prediction and you."
+  };
+  var PET_NUDGE = { dog: 2.5, cat: 1.0, both: 3.0, neither: -1.5 };
+
+  function runCount(){
+    var n = 0;
+    try {
+      n = parseInt(localStorage.getItem("ie-runs") || "0", 10) || 0;
+      localStorage.setItem("ie-runs", String(n + 1));
+    } catch (e) {}
+    return n + 1;
+  }
+
+  function pickEnd(birthStr, petKey){
+    var runs = runCount();
+    var now = new Date();
+
+    /* every fifteenth consultation, the void gets generous */
+    if (runs % 15 === 0){
+      var longSec = 2e9 + Math.random() * 5e8;
+      return { date: new Date(now.getTime() + longSec * 1000), kind: "long" };
+    }
+
+    /* one in ten, it gets rude */
+    if (Math.random() < 0.1){
+      var shortSec = 1e5 + Math.random() * 2e5;
+      return { date: new Date(now.getTime() + shortSec * 1000), kind: "short" };
+    }
+
+    var parts = birthStr.split("-");
+    var birth = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    var deathAge = 35 + Math.random() * 60 + (PET_NUDGE[petKey] || 0);
+
+    var d = new Date(birth.getTime());
+    d.setFullYear(d.getFullYear() + Math.floor(deathAge));
+    d.setMonth(d.getMonth() + Math.floor((deathAge % 1) * 12));
+
+    if (d <= now){
+      d = new Date(now.getTime() + Math.random() * 365 * 86400000);
+      return { date: d, kind: "overdue" };
+    }
+    return { date: d, kind: "normal", age: Math.floor(deathAge) };
+  }
+
+  var VERDICTS = {
+    long: "The void checked twice. You have an unreasonable amount of time left. Do something with it.",
+    short: "Short notice. Say the thing you have been putting off.",
+    overdue: "By the numbers you are already overdue. Consider this a bonus round.",
+    normal: ""
+  };
+
+  function diff(to){
+    var now = new Date();
+    var y = to.getFullYear() - now.getFullYear();
+    var mo = to.getMonth() - now.getMonth();
+    var d = to.getDate() - now.getDate();
+    var h = to.getHours() - now.getHours();
+    var mi = to.getMinutes() - now.getMinutes();
+    var s = to.getSeconds() - now.getSeconds();
+
+    if (s < 0){ s += 60; mi--; }
+    if (mi < 0){ mi += 60; h--; }
+    if (h < 0){ h += 24; d--; }
+    if (d < 0){
+      var prev = new Date(now.getFullYear(), now.getMonth(), 0);
+      d += prev.getDate();
+      mo--;
+    }
+    if (mo < 0){ mo += 12; y--; }
+    return [y, mo, d, h, mi, s];
+  }
+
+  function paint(){
+    if (!endDate) return;
+    if (endDate <= new Date()){
+      clearInterval(timer);
+      ["y","mo","d","h","mi","s"].forEach(function(id){ $(id).textContent = "0"; });
+      over.hidden = false;
+      return;
+    }
+    var p = diff(endDate);
+    $("y").textContent = p[0];
+    $("mo").textContent = p[1];
+    $("d").textContent = p[2];
+    $("h").textContent = p[3];
+    $("mi").textContent = p[4];
+    $("s").textContent = p[5];
+  }
+
+  function drawBalls(el, count, max, exclude){
+    var set = [];
+    var guard = 0;
+    while (set.length < count && guard++ < 500){
+      var n = Math.floor(Math.random() * max) + 1;
+      if (set.indexOf(n) === -1 && (!exclude || exclude.indexOf(n) === -1)) set.push(n);
+    }
+    set.sort(function(a, b){ return a - b; });
+    var html = "";
+    for (var i = 0; i < set.length; i++){
+      html += '<span class="ball">' + set[i] + "</span>";
+    }
+    el.innerHTML = html;
+    return set;
+  }
+
+  function rollNumbers(){
+    var lucky = drawBalls($("luckyBalls"), 6, 69, null);
+    drawBalls($("unluckyBalls"), 4, 69, lucky);
+  }
+
+  $("go").addEventListener("click", function(){
+    if (!birthdate.value){
+      err.hidden = false;
+      err.textContent = "Pick a birthdate first. The void needs something to work with.";
+      birthdate.focus();
+      return;
+    }
+    err.hidden = true;
+
+    var petKey = pet.value;
+    var res = pickEnd(birthdate.value, petKey);
+    endDate = res.date;
+
+    verdict.textContent = res.kind === "normal"
+      ? "The void has settled on your " + res.age + "th year."
+      : VERDICTS[res.kind];
+    petLine.textContent = PET_LINES[petKey];
+
+    over.hidden = true;
+    screenInput.hidden = true;
+    screenCount.hidden = false;
+    strip.hidden = false;
+
+    rollNumbers();
+    paint();
+    if (timer) clearInterval(timer);
+    timer = setInterval(paint, 1000);
+  });
+
+  $("again").addEventListener("click", function(){
+    if (timer) clearInterval(timer);
+    endDate = null;
+    screenCount.hidden = true;
+    strip.hidden = true;
+    screenInput.hidden = false;
+    over.hidden = true;
+  });
+
+  $("reroll").addEventListener("click", rollNumbers);
+})();
+</script>
+
+</body></html>
